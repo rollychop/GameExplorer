@@ -83,13 +83,16 @@ fun GameDetailItem(
         }
 
         if (gameModel.screenShots.isNotEmpty()) {
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 items(gameModel.screenShots) { screenshotUrl ->
                     AsyncImage(
                         model = screenshotUrl,
                         contentDescription = "Screenshot",
                         modifier = Modifier
-                            .size(120.dp)
+                            .width(240.dp)
+                            .height(120.dp)
                             .clip(RoundedCornerShape(10.dp)),
                         contentScale = ContentScale.Crop
                     )
