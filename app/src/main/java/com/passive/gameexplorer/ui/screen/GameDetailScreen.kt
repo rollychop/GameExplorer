@@ -321,6 +321,7 @@ fun GameDetailScreenContent(
                             modifier = Modifier.padding(top = 16.dp)
                         )
                     }
+                    Spacer(Modifier.height(16.dp))
                 }
             }
 
@@ -358,7 +359,9 @@ fun RatingBar(
 @Composable
 fun CommentCard(comment: CommentModel) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 8.dp),
         elevation = CardDefaults.elevatedCardElevation(4.dp)
     ) {
         Row(
