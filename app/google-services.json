@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "192771136493",
+    "project_id": "b-unknown",
+    "storage_bucket": "b-unknown.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:192771136493:android:07ebf3413f144b6383e5e4",
+        "android_client_info": {
+          "package_name": "com.passive.gameexplorer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBYi1R46_OBKc7FlKHPidDCofRsLiHDWM4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
