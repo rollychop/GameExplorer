@@ -12,4 +12,5 @@ data class GameModel(
     val totalComments: Int = 0,
     val profileUrl: String? = null,
     val screenShots: List<String> = emptyList(),
+    val extras: List<String> = emptyList(),
 )

@@ -1,15 +1,21 @@
 package com.passive.gameexplorer.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -38,14 +44,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import coil3.compose.AsyncImage
 import com.passive.gameexplorer.data.GameIdGenerator
+import com.passive.gameexplorer.model.CommentModel
 import com.passive.gameexplorer.model.GameDetailModel
-import com.passive.gameexplorer.ui.components.GameItem
+import com.passive.gameexplorer.ui.components.GameDetailItem
+import com.passive.gameexplorer.ui.components.generateAvatarUrl
+import com.passive.gameexplorer.ui.components.generatePlayerName
 import com.passive.gameexplorer.ui.theme.GameExplorerTheme
 import com.passive.gameexplorer.viewmodels.GameViewModel
 
@@ -207,68 +223,96 @@ fun GameDetailScreenContent(
 
                 Column(
                     modifier = Modifier
-                        .padding(16.dp)
+                        .padding(horizontal = 16.dp)
                         .verticalScroll(rememberScrollState())
                         .imePadding()
                 ) {
-                    GameItem(
+                    GameDetailItem(
                         gameModel = model.gameModel,
                         modifier = Modifier
                     )
-
-                    // Rating
-                    Text("Your Rating:")
-                    RatingBar(
-                        rating = userRating,
-                        onRatingChanged = { userRating = it },
-                        enabled = model.userRating == null
-                    )
-
-                    Button(
-                        onClick = {
-                            onUserRatingSubmit(userRating)
-                        },
-                        enabled = model.userRating == null
-                    ) {
-                        Text("Submit rating")
-                    }
-
-                    // Comment input
-                    OutlinedTextField(
-                        value = userComment,
-                        onValueChange = { userComment = it },
-                        label = { Text("Your Comment") },
+                    Spacer(Modifier.height(16.dp))
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 8.dp, bottom = 8.dp)
-                    )
-
-                    // Submit Button (pseudo-action)
-                    Button(
-                        onClick = {
-                            onUserCommentSubmit(userComment.text)
-                        }
+                            .padding(top = 16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                     ) {
-                        Text("Submit Comment")
+                        Column(modifier = Modifier.padding(16.dp)) {
+
+                            Text(
+                                text = "Rate this Game",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            RatingBar(
+                                rating = userRating,
+                                onRatingChanged = { userRating = it },
+                                enabled = model.userRating == null
+                            )
+
+                            Button(
+                                onClick = {
+                                    onUserRatingSubmit(userRating)
+                                },
+                                enabled = model.userRating == null,
+                                modifier = Modifier.padding(top = 8.dp)
+                            ) {
+                                Text("Submit Rating")
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Leave a Comment",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+
+                            OutlinedTextField(
+                                value = userComment,
+                                onValueChange = { userComment = it },
+                                label = { Text("Your Comment") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                enabled = model.userComment == null,
+
+                                )
+
+                            Button(
+                                onClick = {
+                                    onUserCommentSubmit(userComment.text)
+                                },
+                                modifier = Modifier.padding(top = 8.dp),
+                                enabled = model.userComment == null,
+                            ) {
+                                Text("Submit Comment")
+                            }
+                        }
                     }
 
-                    // Divider
-                    HorizontalDivider()
                     Text(
                         "All Comments",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(top = 24.dp)
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                     )
 
                     if (model.comments.isEmpty()) {
-                        Text("No comments yet.", modifier = Modifier.padding(8.dp))
+                        Text(
+                            "No comments yet.",
+                            modifier = Modifier.padding(8.dp),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     } else {
                         model.comments.forEach {
-                            CommentCard(comment = it.comment)
+                            CommentCard(comment = it)
                         }
                     }
-
-                    // Optional: show average rating
                     if (model.ratings.isNotEmpty()) {
                         val avgRating =
                             remember(model) { model.ratings.map { it.rating }.average() }
@@ -312,15 +356,41 @@ fun RatingBar(
 }
 
 @Composable
-fun CommentCard(comment: String) {
+fun CommentCard(comment: CommentModel) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
+        modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.elevatedCardElevation(4.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = comment, style = MaterialTheme.typography.bodyMedium)
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            AsyncImage(
+                generateAvatarUrl(comment.deviceId),
+                "",
+                modifier = Modifier
+                    .size(32.dp)
+                    .clip(CircleShape)
+                    .border(2.dp, Color(0xFFFF8F00), CircleShape),
+                contentScale = ContentScale.Crop
+            )
+            Column(modifier = Modifier) {
+                Text(
+                    text = generatePlayerName(comment.deviceId),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+                Text(
+                    text = comment.comment.capitalize(LocaleList.current),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
         }
     }
 }

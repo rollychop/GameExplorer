@@ -2,48 +2,53 @@ package com.passive.gameexplorer.ui.screen
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.passive.gameexplorer.model.GameModel
+import com.passive.gameexplorer.model.UserProfile
 import com.passive.gameexplorer.ui.components.GameItem
 import com.passive.gameexplorer.viewmodels.GameViewModel
 
 @Composable
 fun GameListScreenRoot(
-    gameType: String,
-    gameViewModel: GameViewModel,
+    viewModel: GameViewModel,
     onGameClick: (GameModel) -> Unit
 ) {
-    LaunchedEffect(gameType) {
-        gameViewModel.fetchGameIds(gameType)
-    }
 
-    val gameIds by gameViewModel.gameIds.collectAsState(initial = emptyList())
-    val isLoading by gameViewModel.isLoading.collectAsState(initial = false)
-    val errorMessage by gameViewModel.errorMessage.collectAsState(initial = "")
+    val gameIds by viewModel.gameIds.collectAsStateWithLifecycle()
+    val profile by viewModel.profile.collectAsStateWithLifecycle()
+    val isLoading by viewModel.isLoading.collectAsStateWithLifecycle()
+    val errorMessage by viewModel.errorMessage.collectAsStateWithLifecycle()
     GameListScreen(
         gameIds = gameIds,
         isLoading = isLoading,
         errorMessage = errorMessage,
-        onGameClicked = onGameClick
+        onGameClicked = onGameClick,
+        profile = profile
     )
 }
 
@@ -54,12 +59,35 @@ fun GameListScreen(
     isLoading: Boolean,
     errorMessage: String,
     onGameClicked: (GameModel) -> Unit = {},
+    profile: UserProfile?
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(title = {
-                Text("Game Explorer")
-            })
+            TopAppBar(
+                title = {
+                    Text("Game Explorer")
+                },
+                actions = {
+                    if (profile != null) {
+                        Row(
+                            modifier = Modifier.padding(end = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = profile.coins.toString(),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Icon(
+                                imageVector = Icons.Default.Star,
+                                contentDescription = "coins",
+                                tint = Color(0xFFF9A825)
+                            )
+                        }
+
+                    }
+                }
+            )
         }
     ) { innerPadding ->
 
@@ -87,8 +115,8 @@ fun GameListScreen(
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .padding(16.dp)
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(8.dp)
             ) {
                 items(gameIds) { gameIdDetails ->
                     GameItem(
@@ -134,5 +162,6 @@ fun GameListScreenPreview() {
         gameIds = dummyGameIds,
         isLoading = false,
         errorMessage = "",
+        profile = UserProfile(coins = 10)
     )
 }

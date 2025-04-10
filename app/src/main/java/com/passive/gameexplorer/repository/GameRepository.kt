@@ -81,6 +81,10 @@ class GameRepository(
         gameVehicles = document.get("gameVehicles") as? List<String> ?: emptyList(),
         rating = (document.getDouble("rating") ?: 0).toFloat(),
         createdAt = (document.getDate("createdAt")?.time ?: 0),
+        totalComments = (document.getLong("total_comments") ?: 0).toInt(),
+        profileUrl = document.getString("profileUrl"),
+        screenShots = document.get("screenShots") as? List<String> ?: emptyList(),
+        extras = document.get("extras") as? List<String> ?: emptyList()
     )
 
     suspend fun getGameDetails(
@@ -159,6 +163,7 @@ class GameRepository(
         rating: Int
     ): Result<String> {
 
+        if (rating < 1) return Result.failure(Exception("Zero rating is not allowed"))
         Log.d(TAG, "rateGameId: $deviceId $gameId $gameType")
         return try {
             db.runTransaction { transaction ->
@@ -226,6 +231,11 @@ class GameRepository(
         gameType: String,
         comment: String
     ): Result<String> {
+        if (comment.trim()
+                .isEmpty()
+        ) return Result.failure(Exception("Empty comment is not allowed"))
+
+
         return try {
             db.runTransaction { transaction ->
 
@@ -233,6 +243,7 @@ class GameRepository(
                 val userRef = profiles.document(deviceId)
                 val userSnap = transaction.get(userRef)
                 val currentCoins = userSnap.getLong("coins") ?: 0
+                val totalComments = userSnap.getLong("total_comments") ?: 0
 
                 if (currentCoins < 10) {
                     throw FirebaseFirestoreException(
@@ -242,8 +253,13 @@ class GameRepository(
                 }
 
                 // Deduct coins
-                transaction.update(userRef, "coins", currentCoins - 10)
-
+                transaction.update(
+                    userRef,
+                    "coins",
+                    currentCoins - 10,
+                    "total_comments",
+                    totalComments + 1
+                )
                 // Add comment
                 val commentData = mapOf(
                     "deviceId" to deviceId,

@@ -1,7 +1,9 @@
 package com.passive.gameexplorer.viewmodels
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.passive.gameexplorer.GameIdListActivity
 import com.passive.gameexplorer.model.GameDetailModel
 import com.passive.gameexplorer.model.GameModel
 import com.passive.gameexplorer.model.UserProfile
@@ -10,7 +12,10 @@ import com.passive.gameexplorer.repository.GameRepository
 import com.passive.gameexplorer.repository.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -19,11 +24,17 @@ class GameViewModel @Inject constructor(
     private val gameRepository: GameRepository,
     private val deviceIdRepository: DeviceIdRepository,
     private val profileRepository: ProfileRepository,
+    savedStateHandle: SavedStateHandle,
 ) : ViewModel() {
+
+    val gameType = savedStateHandle.get<String>(GameIdListActivity.GAME_TYPE_KEY) ?: "BGMI"
 
 
     private val _profile = MutableStateFlow<UserProfile?>(null)
     val profile: StateFlow<UserProfile?> = _profile
+        .onStart { fetchProfile() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(2000), null)
+
 
     private val _gameDetails = MutableStateFlow<GameDetailModel?>(null)
     val gameDetails: StateFlow<GameDetailModel?> = _gameDetails
@@ -31,6 +42,9 @@ class GameViewModel @Inject constructor(
     // State to store game IDs fetched from Firestore
     private val _gameIds = MutableStateFlow<List<GameModel>>(emptyList())
     val gameIds: StateFlow<List<GameModel>> = _gameIds
+        .onStart { fetchGameIds(gameType) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(2000), emptyList())
+
 
     // State to handle loading indicator
     private val _isLoading = MutableStateFlow(false)
@@ -47,7 +61,7 @@ class GameViewModel @Inject constructor(
     val deviceId by lazy { deviceIdRepository.getDeviceId() }
 
     // Fetch game IDs based on the selected game type (BGMI or Free Fire)
-    fun fetchGameIds(gameType: String) {
+    private fun fetchGameIds(gameType: String) {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = ""
@@ -93,7 +107,7 @@ class GameViewModel @Inject constructor(
         }
     }
 
-    fun fetchProfile() {
+    private fun fetchProfile() {
         viewModelScope.launch {
             profileRepository.getProfile(deviceId).fold(
                 onSuccess = {
@@ -163,5 +177,6 @@ class GameViewModel @Inject constructor(
 
     fun clearError() {
         _errorMessage.value = ""
+        _message.value = ""
     }
 }

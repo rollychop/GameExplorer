@@ -26,8 +26,7 @@ class GameIdListActivity : ComponentActivity() {
         setContent {
             GameExplorerTheme {
                 GameListScreenRoot(
-                    gameType = gameType,
-                    gameViewModel = viewModel,
+                    viewModel = viewModel,
                     onGameClick = {
                         startActivity(
                             Intent(this, GameIdDetailActivity::class.java)

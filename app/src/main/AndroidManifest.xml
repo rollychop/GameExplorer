@@ -19,7 +19,6 @@
         <activity
             android:name=".LanguageActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.GameExplorer">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

@@ -3,15 +3,18 @@ package com.passive.gameexplorer
 import android.app.Application
 import android.os.Build
 import android.util.Log
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.request.crossfade
+import coil3.util.DebugLogger
 import com.google.firebase.firestore.FirebaseFirestore
 import com.passive.gameexplorer.repository.DeviceIdRepository
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.DelicateCoroutinesApi
 import java.time.Instant
 
 @HiltAndroidApp
-class MyApp : Application() {
-    @OptIn(DelicateCoroutinesApi::class)
+class MyApp : Application(), SingletonImageLoader.Factory {
     override fun onCreate() {
         super.onCreate()
         val deviceId = DeviceIdRepository(this).getDeviceId()
@@ -56,6 +59,13 @@ class MyApp : Application() {
                     Log.e("MyApp", "Error creating device info", task.exception)
                 }
             }
+    }
+
+    override fun newImageLoader(context: PlatformContext): ImageLoader {
+        return ImageLoader.Builder(context)
+            .logger(DebugLogger())
+            .crossfade(true)
+            .build()
     }
 
 }
